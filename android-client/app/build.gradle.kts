@@ -90,8 +90,8 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
 
-    // Mobile-FFmpeg (FFmpegKit full)
-    implementation("com.arthenica:ffmpeg-kit-full:6.0.LTS")
+    // Mobile-FFmpeg (FFmpegKit full - maintained fork)
+    implementation("dev.ffmpegkit-maintained:ffmpeg-kit-full:6.0.4")
 
     // WorkManager (Background Upload & Processing)
     implementation("androidx.work:work-runtime-ktx:2.9.0")
