@@ -1,0 +1,96 @@
+name: Build Video Swap APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Compile Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: 📱 Setup Android SDK Tools
+        uses: android-actions/setup-android@v3
+
+      - name: 🔧 Locate Android Project Directory
+        id: locate-project
+        run: |
+          if [ -f "android-client/app/build.gradle.kts" ]; then
+            echo "project_dir=android-client" >> $GITHUB_OUTPUT
+            echo "Found Android project in android-client/"
+          elif [ -f "app/build.gradle.kts" ]; then
+            echo "project_dir=." >> $GITHUB_OUTPUT
+            echo "Found Android project in root"
+          else
+            echo "project_dir=." >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📦 Ensure Gradle Wrapper Exists
+        working-directory: ${{ steps.locate-project.outputs.project_dir }}
+        run: |
+          if [ ! -f "gradlew" ]; then
+            echo "Generating Gradle wrapper..."
+            gradle wrapper --gradle-version 8.5
+          fi
+          chmod +x gradlew
+
+      - name: 🚀 Compile Debug APK
+        working-directory: ${{ steps.locate-project.outputs.project_dir }}
+        run: |
+          ./gradlew assembleDebug --stacktrace
+
+      - name: 🔍 Find Compiled APK
+        id: find-apk
+        run: |
+          APK_PATH=$(find . -type f -name "*debug.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ APK build output not found!"
+            exit 1
+          fi
+          echo "Found APK: $APK_PATH"
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+          cp "$APK_PATH" VideoSwap-debug.apk
+
+      - name: 📤 Upload APK Artifact (Downloadable from GitHub Actions)
+        uses: actions/upload-artifact@v4
+        with:
+          name: VideoSwap-App-Debug-APK
+          path: VideoSwap-debug.apk
+          retention-days: 14
+
+      - name: 🏷️ Publish Direct Download Release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0-apk
+          name: "Video Swap Android APK v1.0.0"
+          body: |
+            ### 🎭 Video Swap Mobile APK is Ready!
+            Built automatically via GitHub Actions.
+            - **Device Target**: Itel Super 26 Ultra (Unisoc T7300, Android 14)
+            - **Engine**: Jetpack Compose + Mobile-FFmpeg + Media3 ExoPlayer
+            - **Backend Support**: Works with the free Google Colab notebook (`VideoSwapPipeline_Colab.ipynb`).
+            
+            **Direct Download**: Download `VideoSwap-debug.apk` below and install it directly on your phone.
+          files: VideoSwap-debug.apk
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Video Swap</string>
+    <string name="server_url_label">Server URL</string>
+    <string name="test_connection">Test Connection</string>
+    <string name="select_video">Select Video</string>
+    <string name="record_video">Record Video</string>
+    <string name="select_reference">Select Character Reference</string>
+    <string name="start_swap">Start Swap</string>
+    <string name="processing">Processing...</string>
+    <string name="completed">Completed</string>
+    <string name="failed">Failed</string>
+    <string name="download">Download</string>
+    <string name="save_to_gallery">Save to Gallery</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+</resources>
