@@ -5,7 +5,7 @@ on:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -26,8 +26,9 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: 📱 Setup Android SDK Tools
-        uses: android-actions/setup-android@v3
+      - name: 📱 Accept Android SDK Licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
 
       - name: 🔧 Locate Android Project Directory
         id: locate-project
@@ -42,19 +43,16 @@ jobs:
             echo "project_dir=." >> $GITHUB_OUTPUT
           fi
 
-      - name: 📦 Ensure Gradle Wrapper Exists
+      - name: 📦 Setup Gradle Wrapper
         working-directory: ${{ steps.locate-project.outputs.project_dir }}
         run: |
-          if [ ! -f "gradlew" ]; then
-            echo "Generating Gradle wrapper..."
-            gradle wrapper --gradle-version 8.5
-          fi
+          gradle wrapper --gradle-version 8.5
           chmod +x gradlew
 
       - name: 🚀 Compile Debug APK
         working-directory: ${{ steps.locate-project.outputs.project_dir }}
         run: |
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: 🔍 Find Compiled APK
         id: find-apk
@@ -68,7 +66,7 @@ jobs:
           echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
           cp "$APK_PATH" VideoSwap-debug.apk
 
-      - name: 📤 Upload APK Artifact (Downloadable from GitHub Actions)
+      - name: 📤 Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: VideoSwap-App-Debug-APK
@@ -76,7 +74,7 @@ jobs:
           retention-days: 14
 
       - name: 🏷️ Publish Direct Download Release
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0-apk
