@@ -18,7 +18,7 @@ class VideoSwapApp : Application(), Configuration.Provider {
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
-            .setMinimumLoggingLevel(if (BuildConfig.DEBUG) Log.DEBUG else Log.INFO)
+            .setMinimumLoggingLevel(Log.INFO)
             .build()
 
     companion object {
